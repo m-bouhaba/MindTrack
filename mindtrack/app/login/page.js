@@ -16,6 +16,8 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     await login(email, password);
+
+    router.push('/dashboard');
   };
 
   return (

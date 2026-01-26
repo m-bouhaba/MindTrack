@@ -1,0 +1,134 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { useSelector } from "react-redux";
+
+export default function OnboardingRecap() {
+  const { goals, lifestyle, suggestedHabits, mood } = useSelector(
+    (state) => state.onboarding,
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-green-50 flex items-center justify-center px-4 py-12">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-2xl text-center"
+      >
+        {/* Title */}
+        <h2 className="text-2xl font-semibold mb-2">Your Personal Summary</h2>
+        <p className="text-gray-600 mb-8">
+          Here’s a quick overview of what matters to you 🌱
+        </p>
+
+        {/* Mood */}
+        {mood && (
+          <div className="mb-8">
+            <div className="text-sm text-gray-500 mb-2">Your current mood</div>
+            <div className="text-5xl">{getMoodEmoji(mood)}</div>
+          </div>
+        )}
+
+        {/* Goals */}
+        <div className="mb-8">
+          <div className="text-sm text-gray-500 mb-3">Your goals</div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {goals &&
+              Object.entries(goals).map(
+                ([key, value]) =>
+                  value && (
+                    <span
+                      key={key}
+                      className="px-4 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium"
+                    >
+                      {formatGoalLabel(key)}
+                    </span>
+                  ),
+              )}
+          </div>
+        </div>
+
+        {/* Lifestyle */}
+        <div className="mb-8">
+          <div className="text-sm text-gray-500 mb-3">Your lifestyle</div>
+          <div className="flex flex-wrap justify-center gap-3 text-sm">
+            {Object.entries(lifestyle).map(([key, value]) => (
+              <div
+                key={key}
+                className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700"
+              >
+                <span className="font-medium">{formatLifestyleLabel(key)}</span>
+                <div className="text-gray-500">{value || "—"}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Habits */}
+        {/* Selected Habits */}
+        <div className="mt-10 text-center">
+          <div className="text-sm text-gray-500 mb-5">Selected habits</div>
+
+          <div className="flex flex-wrap justify-center gap-5 mb-8">
+            {suggestedHabits?.map((habit) => (
+              <div
+                key={habit.id}
+                className="w-32 h-32 flex flex-col items-center justify-center
+                   rounded-2xl bg-green-50/60"
+              >
+                <span className="text-4xl mb-3">{habit.icon}</span>
+
+                <div className="text-sm font-medium text-gray-800 text-center px-2">
+                  {habit.name}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            className="w-full bg-blue-600 text-white py-3 rounded-xl
+               hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
+          >
+            Start my journey 🚀
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/* Helpers */
+
+function getMoodEmoji(mood) {
+  const map = {
+    veryHappy: "😄",
+    happy: "🙂",
+    neutral: "😐",
+    sad: "😔",
+    stressed: "😣",
+    angry: "😡",
+  };
+  return map[mood];
+}
+
+function formatGoalLabel(key) {
+  const map = {
+    improveSleep: "Improve sleep",
+    reduceStress: "Reduce stress",
+    beProductive: "Be productive",
+    improveHealth: "Improve health",
+    buildHabit: "Build habits",
+  };
+  return map[key] || key;
+}
+
+function formatLifestyleLabel(key) {
+  const map = {
+    sleepHours: "Sleep",
+    exercise: "Exercise",
+    stress: "Stress",
+    water: "Water",
+  };
+  return map[key] || key;
+}
