@@ -1,4 +1,8 @@
+'use client';
+
 import './globals.css';
+import { Provider } from 'react-redux';
+import { store } from '@/store';
 import { AuthProvider } from '@/context/AuthContext';
 
 export const metadata = {
@@ -11,7 +15,9 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <AuthProvider>
-          {children}
+          <Provider store={store}>
+            {children}
+          </Provider>
         </AuthProvider>
       </body>
     </html>
