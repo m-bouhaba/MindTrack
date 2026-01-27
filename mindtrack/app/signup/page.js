@@ -10,16 +10,17 @@ export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const { signup } = useAuth();
+  const { signup } = useAuth(); 
   const router = useRouter();
 
-  const handleSignup = async (e) => {
+  const handleSignup = (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       alert('Passwords do not match');
       return;
     }
-    await signup(email, password);
+    signup(email); // ici juste l'email pour le localStorage
+    router.push('/onboarding/step1');
   };
 
   return (
