@@ -1,7 +1,7 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  goals: [],
+  goals: {},
   lifestyle: {
     sleepHours: null,
     exercise: null,
@@ -9,25 +9,38 @@ const initialState = {
     water: null,
   },
   suggestedHabits: [],
-  mood: '',  
+  mood: null,
+  completed: false,
 };
 
 const onboardingSlice = createSlice({
-  name: 'onboarding',
+  name: "onboarding",
   initialState,
   reducers: {
+    hydrateOnboarding(_, action) {
+      return action.payload;
+    },
+
     setGoals(state, action) {
       state.goals = action.payload;
     },
+
     setLifestyle(state, action) {
       state.lifestyle = action.payload;
     },
+
     setSuggestedHabits(state, action) {
       state.suggestedHabits = action.payload;
     },
-    setMood(state, action) {   
-    state.mood = action.payload;
+
+    setMood(state, action) {
+      state.mood = action.payload;
     },
+
+    completeOnboarding(state) {
+      state.completed = true;
+    },
+
     resetOnboarding() {
       return initialState;
     },
@@ -35,10 +48,12 @@ const onboardingSlice = createSlice({
 });
 
 export const {
+  hydrateOnboarding,
   setGoals,
   setLifestyle,
   setSuggestedHabits,
   setMood,
+  completeOnboarding,
   resetOnboarding,
 } = onboardingSlice.actions;
 

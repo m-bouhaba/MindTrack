@@ -1,38 +1,42 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { useDispatch } from 'react-redux';
-import { setGoals } from '@/redux/onboardingSlice';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { useDispatch, useSelector } from "react-redux";
+import { setGoals } from "@/redux/onboardingSlice";
 
 export default function OnboardingGoals() {
   const router = useRouter();
   const dispatch = useDispatch();
+  const goalsFromRedux = useSelector((state) => state.onboarding.goals);
 
-  const [selectedGoals, setSelectedGoals] = useState({
-    reduceStress: false,
-    improveSleep: false,
-    beProductive: false,
-    improveHealth: false,
-    buildHabit: false,
-  });
+  const [selectedGoals, setSelectedGoals] = useState(
+    goalsFromRedux && Object.keys(goalsFromRedux).length > 0
+      ? goalsFromRedux
+      : {
+          improveSleep: false,
+          reduceStress: false,
+          beProductive: false,
+          improveHealth: false,
+        },
+  );
 
   const goals = [
-    { id: 'reduceStress', label: 'Reduce stress', emoji: '😌' },
-    { id: 'improveSleep', label: 'Improve sleep', emoji: '💤' },
-    { id: 'beProductive', label: 'Be more productive', emoji: '⚡' },
-    { id: 'improveHealth', label: 'Improve health / weight', emoji: '🏃‍♀️' },
-    { id: 'buildHabit', label: 'Build a new habit', emoji: '🎯' },
+    { id: "reduceStress", label: "Reduce stress", emoji: "😌" },
+    { id: "improveSleep", label: "Improve sleep", emoji: "💤" },
+    { id: "beProductive", label: "Be more productive", emoji: "⚡" },
+    { id: "improveHealth", label: "Improve health / weight", emoji: "🏃‍♀️" },
+    { id: "buildHabit", label: "Build a new habit", emoji: "🎯" },
   ];
 
   const handleToggle = (id) => {
-    setSelectedGoals(prev => ({ ...prev, [id]: !prev[id] }));
+    setSelectedGoals((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const handleNext = () => {
     dispatch(setGoals(selectedGoals));
-    router.push('/onboarding/step2');
+    router.push("/onboarding/step2");
   };
 
   return (
@@ -47,6 +51,7 @@ export default function OnboardingGoals() {
         <div className="mb-8">
           <div className="flex justify-center gap-2 mb-6">
             <div className="w-12 h-2 bg-blue-600 rounded-full"></div>
+            <div className="w-12 h-2 bg-gray-200 rounded-full"></div>
             <div className="w-12 h-2 bg-gray-200 rounded-full"></div>
             <div className="w-12 h-2 bg-gray-200 rounded-full"></div>
           </div>
@@ -65,8 +70,8 @@ export default function OnboardingGoals() {
               onClick={() => handleToggle(goal.id)}
               className={`p-6 rounded-2xl border-2 transition-all text-left ${
                 selectedGoals[goal.id]
-                  ? 'border-blue-600 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? "border-blue-600 bg-blue-50"
+                  : "border-gray-200 hover:border-gray-300"
               }`}
             >
               <div className="flex items-center gap-3">

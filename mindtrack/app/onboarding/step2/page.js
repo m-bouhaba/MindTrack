@@ -1,55 +1,56 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { useDispatch } from 'react-redux';
-import { setLifestyle } from '@/redux/onboardingSlice';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { useDispatch, useSelector } from "react-redux";
+import { setLifestyle } from "@/redux/onboardingSlice";
 
 export default function OnboardingLifestyle() {
   const router = useRouter();
   const dispatch = useDispatch();
+  const lifestyleFromRedux = useSelector((state) => state.onboarding.lifestyle);
 
   const [answers, setAnswers] = useState({
-    sleepHours: '',
-    exercise: '',
-    stress: '',
-    water: '',
+    sleepHours: lifestyleFromRedux?.sleepHours || "",
+    exercise: lifestyleFromRedux?.exercise || "",
+    stress: lifestyleFromRedux?.stress || "",
+    water: lifestyleFromRedux?.water || "",
   });
 
   const questions = [
     {
-      id: 'sleepHours',
-      question: 'How many hours do you sleep per night?',
-      options: ['Less than 5', '5-6 hours', '7-8 hours', 'More than 8'],
+      id: "sleepHours",
+      question: "How many hours do you sleep per night?",
+      options: ["Less than 5", "5-6 hours", "7-8 hours", "More than 8"],
     },
     {
-      id: 'exercise',
-      question: 'Do you exercise regularly?',
-      options: ['Never', 'Sometimes', 'Often', 'Daily'],
+      id: "exercise",
+      question: "Do you exercise regularly?",
+      options: ["Never", "Sometimes", "Often", "Daily"],
     },
     {
-      id: 'stress',
-      question: 'Do you often feel stressed?',
-      options: ['Rarely', 'Sometimes', 'Often', 'Very often'],
+      id: "stress",
+      question: "Do you often feel stressed?",
+      options: ["Rarely", "Sometimes", "Often", "Very often"],
     },
     {
-      id: 'water',
-      question: 'Do you drink enough water daily?',
-      options: ['No', 'Sometimes', 'Usually', 'Always'],
+      id: "water",
+      question: "Do you drink enough water daily?",
+      options: ["No", "Sometimes", "Usually", "Always"],
     },
   ];
 
   const handleSelect = (questionId, value) => {
-    setAnswers(prev => ({ ...prev, [questionId]: value }));
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
   const handleNext = () => {
-    if (Object.values(answers).every(a => a !== '')) {
+    if (Object.values(answers).every((a) => a !== "")) {
       dispatch(setLifestyle(answers));
-      router.push('/onboarding/step3');
+      router.push("/onboarding/step3");
     } else {
-      alert('Please answer all questions');
+      alert("Please answer all questions");
     }
   };
 
@@ -67,9 +68,12 @@ export default function OnboardingLifestyle() {
             <div className="w-12 h-2 bg-blue-600 rounded-full"></div>
             <div className="w-12 h-2 bg-blue-600 rounded-full"></div>
             <div className="w-12 h-2 bg-gray-200 rounded-full"></div>
+            <div className="w-12 h-2 bg-gray-200 rounded-full"></div>
           </div>
           <h2 className="text-center mb-2">Tell us about your lifestyle</h2>
-          <p className="text-center text-gray-600">This helps us personalize your experience</p>
+          <p className="text-center text-gray-600">
+            This helps us personalize your experience
+          </p>
         </div>
 
         {/* Questions */}
@@ -83,14 +87,14 @@ export default function OnboardingLifestyle() {
             >
               <h3 className="mb-4 text-lg">{q.question}</h3>
               <div className="grid grid-cols-2 gap-3">
-                {q.options.map(option => (
+                {q.options.map((option) => (
                   <button
                     key={option}
                     onClick={() => handleSelect(q.id, option)}
                     className={`p-3 rounded-xl border-2 transition-all ${
                       answers[q.id] === option
-                        ? 'border-blue-600 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? "border-blue-600 bg-blue-50"
+                        : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
                     {option}
@@ -104,7 +108,7 @@ export default function OnboardingLifestyle() {
         {/* Navigation Buttons */}
         <div className="flex gap-4">
           <button
-            onClick={() => router.push('/onboarding/step1')}
+            onClick={() => router.push("/onboarding/step1")}
             className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl hover:bg-gray-300 transition-colors"
           >
             Back

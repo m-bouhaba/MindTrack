@@ -1,12 +1,23 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
+import { completeOnboarding } from "@/redux/onboardingSlice";
+import { useEffect } from "react";
 
 export default function OnboardingRecap() {
-  const { goals, lifestyle, suggestedHabits, mood } = useSelector(
-    (state) => state.onboarding,
+  const { goals, lifestyle, suggestedHabits, mood, completed } = useSelector(
+    (state) => state.onboarding || {},
   );
+  const router = useRouter();
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+  if (completed) {
+    router.replace("/dashboard");
+  }
+}, [completed, router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-green-50 flex items-center justify-center px-4 py-12">
@@ -66,20 +77,19 @@ export default function OnboardingRecap() {
         </div>
 
         {/* Habits */}
-        <div className="relative mt-6">
-          {/* Habits list */}
-          <div
-            className="flex gap-4 overflow-x-auto pb-4 px-2
-               snap-x snap-mandatory scrollbar-hide"
-          >
-            {suggestedHabits.map((habit) => (
+        {/* Selected Habits */}
+        <div className="mt-10 text-center">
+          <div className="text-sm text-gray-500 mb-5">Selected habits</div>
+
+          <div className="flex flex-wrap justify-center gap-5 mb-8">
+            {suggestedHabits?.map((habit) => (
               <div
                 key={habit.id}
-                className="snap-center min-w-[120px] h-32
-                   flex flex-col items-center justify-center
-                   rounded-2xl bg-green-50/60 flex-shrink-0"
+                className="w-32 h-32 flex flex-col items-center justify-center
+                   rounded-2xl bg-green-50/60"
               >
                 <span className="text-4xl mb-3">{habit.icon}</span>
+
                 <div className="text-sm font-medium text-gray-800 text-center px-2">
                   {habit.name}
                 </div>
@@ -87,11 +97,12 @@ export default function OnboardingRecap() {
             ))}
           </div>
 
-          {/* Gradient hint */}
-          <div
-            className="pointer-events-none absolute top-0 right-0 h-full w-12
-                  bg-gradient-to-l from-white to-transparent"
-          />
+          <button
+            onClick={() => dispatch(completeOnboarding())}
+            className="w-full bg-blue-600 text-white py-3 rounded-xl"
+          >
+            Start my journey 🚀
+          </button>
         </div>
       </motion.div>
     </div>

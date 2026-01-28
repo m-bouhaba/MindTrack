@@ -48,7 +48,8 @@ export default function OnboardingMood() {
             <div className="w-12 h-2 bg-blue-600 rounded-full"></div>
             <div className="w-12 h-2 bg-blue-600 rounded-full"></div>
             <div className="w-12 h-2 bg-blue-600 rounded-full"></div>
-            <div className="w-12 h-2 bg-gray-200 rounded-full"></div>
+            <div className="w-12 h-2 bg-blue-600 rounded-full"></div>
+
           </div>
           <h2 className="text-center mb-2">How are you feeling today?</h2>
           <p className="text-center text-gray-600">Select the mood that best matches your current state</p>
