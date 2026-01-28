@@ -66,19 +66,20 @@ export default function OnboardingRecap() {
         </div>
 
         {/* Habits */}
-        {/* Selected Habits */}
-        <div className="mt-10 text-center">
-          <div className="text-sm text-gray-500 mb-5">Selected habits</div>
-
-          <div className="flex flex-wrap justify-center gap-5 mb-8">
-            {suggestedHabits?.map((habit) => (
+        <div className="relative mt-6">
+          {/* Habits list */}
+          <div
+            className="flex gap-4 overflow-x-auto pb-4 px-2
+               snap-x snap-mandatory scrollbar-hide"
+          >
+            {suggestedHabits.map((habit) => (
               <div
                 key={habit.id}
-                className="w-32 h-32 flex flex-col items-center justify-center
-                   rounded-2xl bg-green-50/60"
+                className="snap-center min-w-[120px] h-32
+                   flex flex-col items-center justify-center
+                   rounded-2xl bg-green-50/60 flex-shrink-0"
               >
                 <span className="text-4xl mb-3">{habit.icon}</span>
-
                 <div className="text-sm font-medium text-gray-800 text-center px-2">
                   {habit.name}
                 </div>
@@ -86,12 +87,11 @@ export default function OnboardingRecap() {
             ))}
           </div>
 
-          <button
-            className="w-full bg-blue-600 text-white py-3 rounded-xl
-               hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
-          >
-            Start my journey 🚀
-          </button>
+          {/* Gradient hint */}
+          <div
+            className="pointer-events-none absolute top-0 right-0 h-full w-12
+                  bg-gradient-to-l from-white to-transparent"
+          />
         </div>
       </motion.div>
     </div>
