@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
   // Signup
   const signup = async (email, password) => {
     // Vérifier si user existe sur MockAPI
-    const res = await fetch(`https://mockapi.io/api/users?email=${email}`);
+    const res = await fetch(`https://6995e64fb081bc23e9c4ce17.mockapi.io/users?email=${email}`);
     const data = await res.json();
     if (data.length > 0) {
       alert('Utilisateur déjà existant');
@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
     }
 
     // Créer user sur MockAPI
-    const newUser = await fetch('https://mockapi.io/api/users', {
+    const newUser = await fetch('https://6995e64fb081bc23e9c4ce17.mockapi.io/users', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -45,7 +45,7 @@ export function AuthProvider({ children }) {
 
   // Login
   const login = async (email, password) => {
-    const res = await fetch(`https://mockapi.io/api/users?email=${email}`);
+    const res = await fetch(`https://6995e64fb081bc23e9c4ce17.mockapi.io/users?email=${email}`);
     const data = await res.json();
     if (data.length === 0) {
       alert('Utilisateur introuvable');
