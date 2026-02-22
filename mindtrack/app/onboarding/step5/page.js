@@ -1,23 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useDispatch, useSelector } from "react-redux";
-import { useRouter } from "next/navigation";
-import { completeOnboarding } from "@/redux/onboardingSlice";
-import { useEffect } from "react";
+import { useSelector } from "react-redux";
+import { useAuth } from "@/context/AuthContext";
 
 export default function OnboardingRecap() {
-  const { goals, lifestyle, suggestedHabits, mood, completed } = useSelector(
-    (state) => state.onboarding || {},
+  const { goals, lifestyle, suggestedHabits, mood } = useSelector(
+    (state) => state.onboarding || {}
   );
-  const router = useRouter();
-  const dispatch = useDispatch();
 
-  useEffect(() => {
-  if (completed) {
-    router.replace("/dashboard");
-  }
-}, [completed, router]);
+  const { completeOnboarding } = useAuth();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-green-50 flex items-center justify-center px-4 py-12">
@@ -36,7 +28,9 @@ export default function OnboardingRecap() {
         {/* Mood */}
         {mood && (
           <div className="mb-8">
-            <div className="text-sm text-gray-500 mb-2">Your current mood</div>
+            <div className="text-sm text-gray-500 mb-2">
+              Your current mood
+            </div>
             <div className="text-5xl">{getMoodEmoji(mood)}</div>
           </div>
         )}
@@ -55,40 +49,49 @@ export default function OnboardingRecap() {
                     >
                       {formatGoalLabel(key)}
                     </span>
-                  ),
+                  )
               )}
           </div>
         </div>
 
         {/* Lifestyle */}
         <div className="mb-8">
-          <div className="text-sm text-gray-500 mb-3">Your lifestyle</div>
+          <div className="text-sm text-gray-500 mb-3">
+            Your lifestyle
+          </div>
           <div className="flex flex-wrap justify-center gap-3 text-sm">
-            {Object.entries(lifestyle).map(([key, value]) => (
-              <div
-                key={key}
-                className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700"
-              >
-                <span className="font-medium">{formatLifestyleLabel(key)}</span>
-                <div className="text-gray-500">{value || "—"}</div>
-              </div>
-            ))}
+            {lifestyle &&
+              Object.entries(lifestyle).map(([key, value]) => (
+                <div
+                  key={key}
+                  className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700"
+                >
+                  <span className="font-medium">
+                    {formatLifestyleLabel(key)}
+                  </span>
+                  <div className="text-gray-500">
+                    {value || "—"}
+                  </div>
+                </div>
+              ))}
           </div>
         </div>
 
         {/* Habits */}
-        {/* Selected Habits */}
         <div className="mt-10 text-center">
-          <div className="text-sm text-gray-500 mb-5">Selected habits</div>
+          <div className="text-sm text-gray-500 mb-5">
+            Selected habits
+          </div>
 
           <div className="flex flex-wrap justify-center gap-5 mb-8">
             {suggestedHabits?.map((habit) => (
               <div
                 key={habit.id}
-                className="w-32 h-32 flex flex-col items-center justify-center
-                   rounded-2xl bg-green-50/60"
+                className="w-32 h-32 flex flex-col items-center justify-center rounded-2xl bg-green-50/60"
               >
-                <span className="text-4xl mb-3">{habit.icon}</span>
+                <span className="text-4xl mb-3">
+                  {habit.icon}
+                </span>
 
                 <div className="text-sm font-medium text-gray-800 text-center px-2">
                   {habit.name}
@@ -98,7 +101,7 @@ export default function OnboardingRecap() {
           </div>
 
           <button
-            onClick={() => dispatch(completeOnboarding())}
+            onClick={completeOnboarding}
             className="w-full bg-blue-600 text-white py-3 rounded-xl"
           >
             Start my journey 🚀

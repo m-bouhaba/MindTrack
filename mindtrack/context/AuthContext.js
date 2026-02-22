@@ -11,59 +11,116 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const storedUser = localStorage.getItem('mindtrack-current-user');
-    if (storedUser) setUser(JSON.parse(storedUser));
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
   }, []);
 
-  // Signup
+  // =========================
+  // SIGNUP
+  // =========================
   const signup = async (email, password) => {
-    // Vérifier si user existe sur MockAPI
-    const res = await fetch(`https://6995e64fb081bc23e9c4ce17.mockapi.io/users?email=${email}`);
+    const res = await fetch(
+      `https://6995e64fb081bc23e9c4ce17.mockapi.io/users?email=${email}`
+    );
     const data = await res.json();
+
     if (data.length > 0) {
       alert('Utilisateur déjà existant');
       return;
     }
 
-    // Créer user sur MockAPI
-    const newUser = await fetch('https://6995e64fb081bc23e9c4ce17.mockapi.io/users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email,
-        password, // ici juste pour simulation, jamais en vrai en clair
-        habits: [],
-        history: []
-      })
-    }).then(r => r.json());
+    const newUser = await fetch(
+      'https://6995e64fb081bc23e9c4ce17.mockapi.io/users',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          habits: [],
+          history: [],
+          onboardingCompleted: false, // 👈 IMPORTANT
+        }),
+      }
+    ).then((r) => r.json());
 
-    // Stocker dans localStorage
     localStorage.setItem('mindtrack-current-user', JSON.stringify(newUser));
     setUser(newUser);
 
     router.push('/onboarding/step1');
   };
 
-  // Login
+  // =========================
+  // LOGIN
+  // =========================
   const login = async (email, password) => {
-    const res = await fetch(`https://6995e64fb081bc23e9c4ce17.mockapi.io/users?email=${email}`);
+    const res = await fetch(
+      `https://6995e64fb081bc23e9c4ce17.mockapi.io/users?email=${email}`
+    );
     const data = await res.json();
+
     if (data.length === 0) {
       alert('Utilisateur introuvable');
       return;
     }
+
     const existingUser = data[0];
 
-    // Vérification simple du password (simulation)
     if (existingUser.password !== password) {
       alert('Mot de passe incorrect');
       return;
     }
 
-    localStorage.setItem('mindtrack-current-user', JSON.stringify(existingUser));
+    localStorage.setItem(
+      'mindtrack-current-user',
+      JSON.stringify(existingUser)
+    );
+
     setUser(existingUser);
-    router.push('/dashboard');
+
+    // 👇 REDIRECTION INTELLIGENTE
+    if (existingUser.onboardingCompleted) {
+      router.push('/dashboard');
+    } else {
+      router.push('/onboarding/step1');
+    }
   };
 
+
+  // =========================
+// COMPLETE ONBOARDING
+// =========================
+const completeOnboarding = async () => {
+  if (!user) return;
+
+  // Update MockAPI
+  const updatedUser = await fetch(
+    `https://6995e64fb081bc23e9c4ce17.mockapi.io/users/${user.id}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        onboardingCompleted: true,
+      }),
+    }
+  ).then((r) => r.json());
+
+  // Update localStorage
+  localStorage.setItem(
+    'mindtrack-current-user',
+    JSON.stringify(updatedUser)
+  );
+
+  setUser(updatedUser);
+
+  // Redirect to dashboard
+  router.push('/dashboard');
+};
+
+  // =========================
+  // LOGOUT
+  // =========================
   const logout = () => {
     localStorage.removeItem('mindtrack-current-user');
     setUser(null);
@@ -71,7 +128,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, signup, login, logout }}>
+    <AuthContext.Provider value={{ user, signup, login, logout, completeOnboarding}}>
       {children}
     </AuthContext.Provider>
   );

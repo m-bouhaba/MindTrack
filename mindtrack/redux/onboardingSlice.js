@@ -10,7 +10,6 @@ const initialState = {
   },
   suggestedHabits: [],
   mood: null,
-  completed: false,
 };
 
 const onboardingSlice = createSlice({
@@ -37,10 +36,6 @@ const onboardingSlice = createSlice({
       state.mood = action.payload;
     },
 
-    completeOnboarding(state) {
-      state.completed = true;
-    },
-
     resetOnboarding() {
       return initialState;
     },
@@ -53,7 +48,6 @@ export const {
   setLifestyle,
   setSuggestedHabits,
   setMood,
-  completeOnboarding,
   resetOnboarding,
 } = onboardingSlice.actions;
 
