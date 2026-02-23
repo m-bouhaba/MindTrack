@@ -7,120 +7,132 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // Charger l'utilisateur depuis localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem('mindtrack-current-user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    if (storedUser) setUser(JSON.parse(storedUser));
+    setLoading(false);
   }, []);
 
-  // =========================
   // SIGNUP
-  // =========================
+  // S'inscrire : vérifie l'existence, crée l'user et initialise les données
   const signup = async (email, password) => {
-    const res = await fetch(
-      `https://6995e64fb081bc23e9c4ce17.mockapi.io/users?email=${email}`
-    );
-    const data = await res.json();
+    try {
+      // 1. On cherche si l'email existe. 
+      // Note: On utilise encodeURIComponent pour gérer les caractères spéciaux dans l'URL.
+      const res = await fetch(`https://6995e64fb081bc23e9c4ce17.mockapi.io/users?email=${encodeURIComponent(email)}`);
+      const data = await res.json();
 
-    if (data.length > 0) {
-      alert('Utilisateur déjà existant');
-      return;
-    }
+      // 2. MockAPI fait parfois des recherches partielles. On vérifie l'existence EXACTE.
+      // Si MockAPI retourne une erreur (pas un tableau), on le traite comme non trouvé.
+      const existingUsers = Array.isArray(data) ? data : [];
+      const userExists = existingUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
 
-    const newUser = await fetch(
-      'https://6995e64fb081bc23e9c4ce17.mockapi.io/users',
-      {
+      if (userExists) {
+        alert('Un compte avec cet email existe déjà.');
+        return null;
+      }
+
+      // 3. Création du compte avec les données par défaut
+      const response = await fetch('https://6995e64fb081bc23e9c4ce17.mockapi.io/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email,
+          email: email.toLowerCase(),
           password,
           habits: [],
           history: [],
-          onboardingCompleted: false, // 👈 IMPORTANT
+          onboardingCompleted: false,
+          onboardingMood: null,
+          createdAt: new Date().toISOString()
         }),
-      }
-    ).then((r) => r.json());
+      });
 
-    localStorage.setItem('mindtrack-current-user', JSON.stringify(newUser));
-    setUser(newUser);
+      if (!response.ok) throw new Error('Erreur lors de la création');
 
-    router.push('/onboarding/step1');
+      const newUser = await response.json();
+
+      // 4. On sauve en local et dans le state
+      localStorage.setItem('mindtrack-current-user', JSON.stringify(newUser));
+      setUser(newUser);
+      return newUser;
+    } catch (err) {
+      console.error('Signup error:', err);
+      alert('Impossible de créer le compte. Veuillez réessayer.');
+      return null;
+    }
   };
 
-  // =========================
   // LOGIN
-  // =========================
+  // Connexion : récupère l'user par email et vérifie le mot de passe
   const login = async (email, password) => {
-    const res = await fetch(
-      `https://6995e64fb081bc23e9c4ce17.mockapi.io/users?email=${email}`
-    );
-    const data = await res.json();
+    try {
+      const res = await fetch(`https://6995e64fb081bc23e9c4ce17.mockapi.io/users?email=${encodeURIComponent(email)}`);
+      const data = await res.json();
 
-    if (data.length === 0) {
-      alert('Utilisateur introuvable');
-      return;
-    }
+      const users = Array.isArray(data) ? data : [];
+      const loggedUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
-    const existingUser = data[0];
+      if (!loggedUser) {
+        alert('Utilisateur introuvable.');
+        return null;
+      }
 
-    if (existingUser.password !== password) {
-      alert('Mot de passe incorrect');
-      return;
-    }
+      if (loggedUser.password !== password) {
+        alert('Mot de passe incorrect.');
+        return null;
+      }
 
-    localStorage.setItem(
-      'mindtrack-current-user',
-      JSON.stringify(existingUser)
-    );
-
-    setUser(existingUser);
-
-    // 👇 REDIRECTION INTELLIGENTE
-    if (existingUser.onboardingCompleted) {
-      router.push('/dashboard');
-    } else {
-      router.push('/onboarding/step1');
+      // Succès : on sauve et on met à jour le state
+      localStorage.setItem('mindtrack-current-user', JSON.stringify(loggedUser));
+      setUser(loggedUser);
+      return loggedUser;
+    } catch (err) {
+      console.error('Login error:', err);
+      alert('Erreur de connexion. Vérifiez votre réseau.');
+      return null;
     }
   };
 
-
-  // =========================
-// COMPLETE ONBOARDING
-// =========================
-const completeOnboarding = async () => {
-  if (!user) return;
-
-  // Update MockAPI
-  const updatedUser = await fetch(
-    `https://6995e64fb081bc23e9c4ce17.mockapi.io/users/${user.id}`,
-    {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        onboardingCompleted: true,
-      }),
+  // COMPLETE ONBOARDING
+  // Finalise l'onboarding et met à jour l'utilisateur sur le serveur
+  const completeOnboarding = async (onboardingData) => {
+    if (!user) {
+      console.error('No user found in state during completeOnboarding');
+      return null;
     }
-  ).then((r) => r.json());
 
-  // Update localStorage
-  localStorage.setItem(
-    'mindtrack-current-user',
-    JSON.stringify(updatedUser)
-  );
+    try {
+      const res = await fetch(`https://6995e64fb081bc23e9c4ce17.mockapi.io/users/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...user,
+          habits: onboardingData?.habits || [],
+          onboardingMood: onboardingData?.mood || null,
+          onboardingCompleted: true,
+          updatedAt: new Date().toISOString()
+        }),
+      });
 
-  setUser(updatedUser);
+      if (!res.ok) throw new Error('Erreur lors de la mise à jour');
 
-  // Redirect to dashboard
-  router.push('/dashboard');
-};
+      const updatedUser = await res.json();
 
-  // =========================
-  // LOGOUT
-  // =========================
+      // On met à jour partout pour que les guards (layouts) voient le changement
+      localStorage.setItem('mindtrack-current-user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      return updatedUser;
+    } catch (err) {
+      console.error('Onboarding update error:', err);
+      alert('Erreur lors de la sauvegarde de votre profil.');
+      return null;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('mindtrack-current-user');
     setUser(null);
@@ -128,7 +140,7 @@ const completeOnboarding = async () => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, signup, login, logout, completeOnboarding}}>
+    <AuthContext.Provider value={{ user, loading, signup, login, completeOnboarding, logout }}>
       {children}
     </AuthContext.Provider>
   );

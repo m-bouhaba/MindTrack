@@ -8,16 +8,26 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    await login(email, password);
+    if (isSubmitting) return;
 
-    router.push('/dashboard');
+    setIsSubmitting(true);
+    const loggedUser = await login(email, password);
+
+    if (loggedUser) {
+      if (loggedUser.onboardingCompleted) {
+        router.push('/dashboard');
+      } else {
+        router.push('/onboarding/step1');
+      }
+    } else {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -39,7 +49,14 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-4">
           <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg mt-6">Log In</button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className={`w-full py-3 rounded-xl text-white transition-colors shadow-md hover:shadow-lg mt-6 ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+          >
+            {isSubmitting ? 'Connexion...' : 'Se connecter'}
+          </button>
         </form>
 
         <p className="text-center mt-6 text-gray-600">

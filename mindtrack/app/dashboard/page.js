@@ -2,40 +2,35 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useSelector } from 'react-redux';
+import { useAuth } from '@/context/AuthContext';
 import { Sparkles } from 'lucide-react';
 
 export default function Dashboard() {
-  const { habits, moodEntries } = useSelector((state) => state.user || { habits: [], moodEntries: [] });
-  const onboardingMood = useSelector((state) => state.onboarding.mood);
+  const { user } = useAuth();
 
+  // Get habits from user profile
+  const habits = user?.habits || [];
+  // For initial onboarding mood, we can take it from user profile too
+  const onboardingMood = user?.onboardingMood;
+
+  // Today's tracking state (local for now, as requested to use user from context)
   const [todayMood, setTodayMood] = useState(null);
-  const [completedCount, setCompletedCount] = useState(0);
+  const [completedHabits, setCompletedHabits] = useState([]);
 
+  const completedCount = completedHabits.length;
   const today = new Date().toISOString().split('T')[0];
 
-  useEffect(() => {
-    const todayEntry = moodEntries.find((e) => e.date === today);
-    if (todayEntry) {
-      setTodayMood(todayEntry.mood);
-      setCompletedCount(todayEntry.completedHabits.length);
-    }
-  }, [moodEntries, today]);
-
   const handleHabitToggle = (habitId) => {
-    const todayEntry = moodEntries.find((e) => e.date === today);
-    const currentCompleted = todayEntry?.completedHabits || [];
-    const isCompleted = currentCompleted.includes(habitId);
-
-    setCompletedCount(isCompleted ? completedCount - 1 : completedCount + 1);
+    setCompletedHabits(prev =>
+      prev.includes(habitId)
+        ? prev.filter(id => id !== habitId)
+        : [...prev, habitId]
+    );
   };
 
   const handleMoodSelect = (mood) => {
     setTodayMood(mood);
   };
-
-  const todayEntry = moodEntries.find((e) => e.date === today);
-  const completedHabits = todayEntry?.completedHabits || [];
 
   const moods = [
     { value: 'veryHappy', emoji: '😄', label: 'Very Happy' },

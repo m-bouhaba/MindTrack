@@ -1,6 +1,6 @@
 'use client';
 
-import { useSelector } from "react-redux";
+import { useAuth } from "@/context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
@@ -8,15 +8,27 @@ import Link from "next/link";
 export default function DashboardLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
-  const completed = useSelector((state) => state.onboarding.completed);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    if (!completed) {
-      router.replace("/signup");
+    if (!loading) {
+      if (!user) {
+        // Pas connecté -> direction login
+        router.replace("/login");
+      } else if (!user.onboardingCompleted) {
+        // Connecté mais onboarding pas fini -> direction onboarding
+        router.replace("/onboarding/step1");
+      }
     }
-  }, [completed, router]);
+  }, [user, loading, router]);
 
-  if (!completed) return null;
+  if (loading || !user || !user.onboardingCompleted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Chargement du tableau de bord...</p>
+      </div>
+    );
+  }
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard" },
@@ -39,11 +51,10 @@ export default function DashboardLayout({ children }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`px-4 py-2 rounded-lg transition ${
-                pathname === item.href
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
+              className={`px-4 py-2 rounded-lg transition ${pathname === item.href
+                ? "bg-indigo-600 text-white"
+                : "text-gray-700 hover:bg-gray-100"
+                }`}
             >
               {item.name}
             </Link>
@@ -62,11 +73,10 @@ export default function DashboardLayout({ children }) {
           <Link
             key={item.href}
             href={item.href}
-            className={`text-sm ${
-              pathname === item.href
-                ? "text-indigo-600 font-semibold"
-                : "text-gray-500"
-            }`}
+            className={`text-sm ${pathname === item.href
+              ? "text-indigo-600 font-semibold"
+              : "text-gray-500"
+              }`}
           >
             {item.name}
           </Link>
