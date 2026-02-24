@@ -7,29 +7,86 @@ import { Sparkles } from 'lucide-react';
 
 export default function Dashboard() {
   const { user } = useAuth();
-
-  // Get habits from user profile
-  const habits = user?.habits || [];
-  // For initial onboarding mood, we can take it from user profile too
-  const onboardingMood = user?.onboardingMood;
-
-  // Today's tracking state (local for now, as requested to use user from context)
-  const [todayMood, setTodayMood] = useState(null);
+  const [habits, setHabits] = useState([]);
   const [completedHabits, setCompletedHabits] = useState([]);
+  const [todayMood, setTodayMood] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const completedCount = completedHabits.length;
   const today = new Date().toISOString().split('T')[0];
 
-  const handleHabitToggle = (habitId) => {
-    setCompletedHabits(prev =>
-      prev.includes(habitId)
-        ? prev.filter(id => id !== habitId)
-        : [...prev, habitId]
-    );
+  useEffect(() => {
+    if (user?.id) {
+      loadDashboardData();
+    }
+  }, [user]);
+
+  const loadDashboardData = async () => {
+    setLoading(true);
+    try {
+      // 1. Fetch habits
+      const habitsRes = await fetch(`/api/habits?userId=${user.id}`);
+      const habitsData = await habitsRes.json();
+      setHabits(Array.isArray(habitsData) ? habitsData : []);
+
+      // 2. Fetch today's habit completions
+      const completionsRes = await fetch(`/api/habit-completions?userId=${user.id}&date=${today}`);
+      const completionsData = await completionsRes.json();
+      setCompletedHabits(Array.isArray(completionsData) ? completionsData.map(c => c.habitId) : []);
+
+      // 3. Fetch today's mood
+      const moodRes = await fetch(`/api/mood-entries?userId=${user.id}`);
+      const moodData = await moodRes.json();
+      const todayEntry = moodData.find(m => m.date === today);
+      if (todayEntry) setTodayMood(todayEntry.mood);
+
+    } catch (error) {
+      console.error("Dashboard data load error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleMoodSelect = (mood) => {
-    setTodayMood(mood);
+  const handleHabitToggle = async (habitId) => {
+    try {
+      const res = await fetch('/api/habit-completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          habitId,
+          userId: user.id,
+          date: today,
+        }),
+      });
+
+      const result = await res.json();
+      if (result.status === 'added') {
+        setCompletedHabits(prev => [...prev, habitId]);
+      } else if (result.status === 'removed') {
+        setCompletedHabits(prev => prev.filter(id => id !== habitId));
+      }
+    } catch (error) {
+      console.error("Habit toggle error:", error);
+    }
+  };
+
+  const handleMoodSelect = async (moodValue) => {
+    try {
+      const res = await fetch('/api/mood-entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          date: today,
+          mood: moodValue,
+        }),
+      });
+
+      if (res.ok) {
+        setTodayMood(moodValue);
+      }
+    } catch (error) {
+      console.error("Mood select error:", error);
+    }
   };
 
   const moods = [
@@ -51,32 +108,17 @@ export default function Dashboard() {
 
   const randomMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
 
-  const onboardingMoodEmojiMap = {
-    veryHappy: "😄",
-    happy: "🙂",
-    neutral: "😐",
-    sad: "😔",
-    stressed: "😣",
-    angry: "😡",
-  };
+  if (loading) {
+    return <div className="flex items-center justify-center p-12">Chargement...</div>;
+  }
 
-  const onboardingMoodEmoji = onboardingMood ? onboardingMoodEmojiMap[onboardingMood] : null;
+  const completedCount = completedHabits.length;
 
   return (
     <div className="max-w-4xl mx-auto">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
         <h1 className="mb-2">Welcome back!</h1>
-        <p className="text-gray-600 mb-4">Track your habits and mood for today</p>
-
-        {/* Mood onboarding */}
-        {onboardingMoodEmoji && (
-          <div className="mb-6 flex items-center justify-center gap-3 text-gray-700">
-            <span className="text-3xl">{onboardingMoodEmoji}</span>
-            <span className="text-sm">
-              This is how you felt when you started your journey
-            </span>
-          </div>
-        )}
+        <p className="text-gray-600 mb-6">Track your habits and mood for today</p>
 
         {/* Today's Habits */}
         <div className="bg-white rounded-3xl shadow-md p-6 mb-6">
@@ -148,7 +190,7 @@ export default function Dashboard() {
         {/* Mood Selector */}
         <div className="bg-white rounded-3xl shadow-md p-6 mb-6">
           <h2 className="mb-6">How do you feel today?</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {moods.map((mood, index) => (
               <motion.button
                 key={mood.value}
@@ -156,11 +198,14 @@ export default function Dashboard() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, delay: index * 0.1 }}
                 onClick={() => handleMoodSelect(mood.value)}
-                className={`p-6 rounded-2xl border-2 transition-all ${todayMood === mood.value ? 'border-blue-600 bg-blue-50 scale-105' : 'border-gray-200 hover:border-gray-300 hover:scale-105'
+                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center ${todayMood === mood.value ? 'border-blue-600 bg-blue-50 scale-105 shadow-sm' : 'border-gray-200 hover:border-gray-300 hover:scale-105'
                   }`}
               >
-                <div className="text-5xl mb-2">{mood.emoji}</div>
-                <div className="text-sm text-gray-700">{mood.label}</div>
+                <div className="text-4xl mb-2">{todayMood === mood.value ? mood.emoji : mood.emoji}</div>
+                <div className="text-xs text-center text-gray-700 font-medium">{mood.label}</div>
+                {todayMood === mood.value && (
+                  <motion.div layoutId="mood-active" className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2" />
+                )}
               </motion.button>
             ))}
           </div>
@@ -173,7 +218,7 @@ export default function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-3xl shadow-md p-6 text-center"
           >
-            <p className="text-lg text-purple-900">{randomMessage}</p>
+            <p className="text-lg text-purple-900 font-medium">{randomMessage}</p>
           </motion.div>
         )}
       </motion.div>

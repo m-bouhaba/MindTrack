@@ -18,44 +18,21 @@ export function AuthProvider({ children }) {
   }, []);
 
   // SIGNUP
-  // S'inscrire : vérifie l'existence, crée l'user et initialise les données
   const signup = async (email, password) => {
     try {
-      // 1. On cherche si l'email existe. 
-      // Note: On utilise encodeURIComponent pour gérer les caractères spéciaux dans l'URL.
-      const res = await fetch(`https://6995e64fb081bc23e9c4ce17.mockapi.io/users?email=${encodeURIComponent(email)}`);
-      const data = await res.json();
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-      // 2. MockAPI fait parfois des recherches partielles. On vérifie l'existence EXACTE.
-      // Si MockAPI retourne une erreur (pas un tableau), on le traite comme non trouvé.
-      const existingUsers = Array.isArray(data) ? data : [];
-      const userExists = existingUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-      if (userExists) {
-        alert('Un compte avec cet email existe déjà.');
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || 'Erreur lors de la création');
         return null;
       }
 
-      // 3. Création du compte avec les données par défaut
-      const response = await fetch('https://6995e64fb081bc23e9c4ce17.mockapi.io/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.toLowerCase(),
-          password,
-          habits: [],
-          history: [],
-          onboardingCompleted: false,
-          onboardingMood: null,
-          createdAt: new Date().toISOString()
-        }),
-      });
-
-      if (!response.ok) throw new Error('Erreur lors de la création');
-
       const newUser = await response.json();
-
-      // 4. On sauve en local et dans le state
       localStorage.setItem('mindtrack-current-user', JSON.stringify(newUser));
       setUser(newUser);
       return newUser;
@@ -67,26 +44,21 @@ export function AuthProvider({ children }) {
   };
 
   // LOGIN
-  // Connexion : récupère l'user par email et vérifie le mot de passe
   const login = async (email, password) => {
     try {
-      const res = await fetch(`https://6995e64fb081bc23e9c4ce17.mockapi.io/users?email=${encodeURIComponent(email)}`);
-      const data = await res.json();
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-      const users = Array.isArray(data) ? data : [];
-      const loggedUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-      if (!loggedUser) {
-        alert('Utilisateur introuvable.');
+      if (!res.ok) {
+        const error = await res.json();
+        alert(error.error || 'Identifiants incorrects');
         return null;
       }
 
-      if (loggedUser.password !== password) {
-        alert('Mot de passe incorrect.');
-        return null;
-      }
-
-      // Succès : on sauve et on met à jour le state
+      const loggedUser = await res.json();
       localStorage.setItem('mindtrack-current-user', JSON.stringify(loggedUser));
       setUser(loggedUser);
       return loggedUser;
@@ -98,37 +70,35 @@ export function AuthProvider({ children }) {
   };
 
   // COMPLETE ONBOARDING
-  // Finalise l'onboarding et met à jour l'utilisateur sur le serveur
+  // Note: Since onboarding updates full user, we might need a general user update route.
+  // For now, let's keep it simple or create a profile update route.
   const completeOnboarding = async (onboardingData) => {
-    if (!user) {
-      console.error('No user found in state during completeOnboarding');
-      return null;
-    }
+    if (!user) return null;
 
     try {
-      const res = await fetch(`https://6995e64fb081bc23e9c4ce17.mockapi.io/users/${user.id}`, {
-        method: 'PUT',
+      const res = await fetch('/api/auth/complete-onboarding', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...user,
-          habits: onboardingData?.habits || [],
+          userId: user.id,
           onboardingMood: onboardingData?.mood || null,
-          onboardingCompleted: true,
-          updatedAt: new Date().toISOString()
+          selectedHabits: onboardingData?.habits || [],
         }),
       });
 
       if (!res.ok) throw new Error('Erreur lors de la mise à jour');
 
-      const updatedUser = await res.json();
+      const updatedUser = {
+        ...user,
+        onboardingCompleted: true,
+        onboardingMood: onboardingData?.mood || null,
+      };
 
-      // On met à jour partout pour que les guards (layouts) voient le changement
       localStorage.setItem('mindtrack-current-user', JSON.stringify(updatedUser));
       setUser(updatedUser);
       return updatedUser;
     } catch (err) {
       console.error('Onboarding update error:', err);
-      alert('Erreur lors de la sauvegarde de votre profil.');
       return null;
     }
   };

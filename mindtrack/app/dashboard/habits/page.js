@@ -1,14 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
 
 export default function HabitsPage() {
-  const { user, setUser } = useAuth();
-
-  const habits = user?.habits || [];
+  const { user } = useAuth();
+  const [habits, setHabits] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingHabit, setEditingHabit] = useState(null);
@@ -21,37 +21,58 @@ export default function HabitsPage() {
 
   const habitIcons = ['✨', '💤', '🏃‍♀️', '🧘', '💧', '📚', '🥗', '🎯', '💪', '🌅', '🧠', '❤️'];
 
-  const handleSubmit = (e) => {
+  // Fetch habits from API when the page loads
+  useEffect(() => {
+    if (user?.id) {
+      fetchHabits();
+    }
+  }, [user]);
+
+  const fetchHabits = async () => {
+    try {
+      const res = await fetch(`/api/habits?userId=${user.id}`);
+      const data = await res.json();
+      setHabits(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Failed to fetch habits:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) return;
 
-    if (editingHabit) {
-      const updatedHabits = habits.map((habit) =>
-        habit.id === editingHabit.id
-          ? { ...habit, ...formData }
-          : habit
-      );
-
-      setUser({ ...user, habits: updatedHabits });
-      setEditingHabit(null);
-    } else {
-      const newHabit = {
-        id: Date.now().toString(),
-        name: formData.name,
-        description: formData.description,
-        icon: formData.icon,
-        frequency: 'Daily',
-        enabled: true,
-      };
-
-      setUser({
-        ...user,
-        habits: [...habits, newHabit],
-      });
+    try {
+      if (editingHabit) {
+        // Update existing habit
+        const res = await fetch('/api/habits', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: editingHabit.id,
+            userId: user.id,
+            ...formData
+          }),
+        });
+        if (res.ok) fetchHabits();
+      } else {
+        // Create new habit
+        const res = await fetch('/api/habits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            ...formData
+          }),
+        });
+        if (res.ok) fetchHabits();
+      }
+      handleCancel();
+    } catch (error) {
+      console.error("Error saving habit:", error);
     }
-
-    setFormData({ name: '', description: '', icon: '✨' });
-    setShowAddForm(false);
   };
 
   const handleEdit = (habit) => {
@@ -64,12 +85,18 @@ export default function HabitsPage() {
     setShowAddForm(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!user) return;
 
     if (confirm('Are you sure you want to delete this habit?')) {
-      const filteredHabits = habits.filter((habit) => habit.id !== id);
-      setUser({ ...user, habits: filteredHabits });
+      try {
+        const res = await fetch(`/api/habits?id=${id}&userId=${user.id}`, {
+          method: 'DELETE',
+        });
+        if (res.ok) fetchHabits();
+      } catch (error) {
+        console.error("Error deleting habit:", error);
+      }
     }
   };
 
@@ -155,11 +182,10 @@ export default function HabitsPage() {
                         onClick={() =>
                           setFormData({ ...formData, icon })
                         }
-                        className={`p-4 rounded-xl border-2 text-2xl transition-all ${
-                          formData.icon === icon
+                        className={`p-4 rounded-xl border-2 text-2xl transition-all ${formData.icon === icon
                             ? 'border-blue-600 bg-blue-50 scale-110'
                             : 'border-gray-200 hover:border-gray-300'
-                        }`}
+                          }`}
                       >
                         {icon}
                       </button>

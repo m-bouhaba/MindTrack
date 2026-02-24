@@ -23,21 +23,39 @@ export default function OnboardingRecap() {
   }, [user, loading, router]);
 
   const handleStartJourney = async () => {
-    if (!user || isSubmitting) return;
+  if (!user || isSubmitting) return;
 
-    setIsSubmitting(true);
+  setIsSubmitting(true);
 
+  try {
     const updatedUser = await completeOnboarding({
       habits: suggestedHabits,
       mood: mood,
     });
 
-    if (updatedUser) {
-      router.push('/dashboard');
-    } else {
+    if (!updatedUser) {
       setIsSubmitting(false);
+      return;
     }
-  };
+
+    await fetch("https://n8n.deontex.com/webhook-test/mind", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: user.email,
+        habits: suggestedHabits,
+        mood: mood,
+      }),
+    });
+
+    router.push("/dashboard");
+  } catch (error) {
+    console.error("Webhook error:", error);
+    setIsSubmitting(false);
+  }
+};
 
   if (loading || !user) {
     return (
