@@ -38,7 +38,7 @@ export default function OnboardingRecap() {
       return;
     }
 
-    await fetch("https://n8n.deontex.com/webhook-test/mind", {
+    await fetch("https://n8n.deontex.com/webhook/mind", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
