@@ -23,39 +23,49 @@ export default function OnboardingRecap() {
   }, [user, loading, router]);
 
   const handleStartJourney = async () => {
-  if (!user || isSubmitting) return;
+    if (!user || isSubmitting) return;
 
-  setIsSubmitting(true);
+    setIsSubmitting(true);
 
-  try {
-    const updatedUser = await completeOnboarding({
-      habits: suggestedHabits,
-      mood: mood,
-    });
-
-    if (!updatedUser) {
-      setIsSubmitting(false);
-      return;
-    }
-
-    await fetch("https://n8n.deontex.com/webhook/mind", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: user.email,
+    try {
+      const updatedUser = await completeOnboarding({
         habits: suggestedHabits,
         mood: mood,
-      }),
-    });
+      });
 
-    router.push("/dashboard");
-  } catch (error) {
-    console.error("Webhook error:", error);
-    setIsSubmitting(false);
-  }
-};
+      if (!updatedUser) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      await fetch("/api/mood-entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          date: new Date().toISOString().split("T")[0],
+          mood: mood,
+        }),
+      });
+
+      await fetch("https://n8n.deontex.com/webhook/mind", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: user.email,
+          habits: suggestedHabits,
+          mood: mood,
+        }),
+      });
+
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Webhook error:", error);
+      setIsSubmitting(false);
+    }
+  };
 
   if (loading || !user) {
     return (
@@ -142,9 +152,8 @@ export default function OnboardingRecap() {
           <button
             onClick={handleStartJourney}
             disabled={isSubmitting}
-            className={`w-full py-3 rounded-xl text-white ${
-              isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-            }`}
+            className={`w-full py-3 rounded-xl text-white ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+              }`}
           >
             {isSubmitting ? 'Starting...' : 'Start my journey 🚀'}
           </button>
