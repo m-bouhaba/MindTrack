@@ -9,6 +9,7 @@ import { LogOut, Target, TrendingUp, Calendar, User as UserIcon } from 'lucide-r
 export default function ProfilePage() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  
 
   const [totalDaysTracked, setTotalDaysTracked] = useState(0);
   const [totalHabitsCompleted, setTotalHabitsCompleted] = useState(0);

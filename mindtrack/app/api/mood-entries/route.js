@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { moodEntries } from "@/lib/schema";
 import { eq } from "drizzle-orm";
-
+import { and } from "drizzle-orm";
 /**
  * Handle Mood Entries with userId filtering.
  */
@@ -31,17 +31,54 @@ export async function POST(request) {
         const body = await request.json();
 
         if (!body.userId || !body.mood || !body.date) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+            return NextResponse.json(
+                { error: "Missing required fields" },
+                { status: 400 }
+            );
         }
 
-        const newEntry = await db.insert(moodEntries).values({
-            userId: body.userId,
-            date: body.date,
-            mood: body.mood,
-        }).returning();
+        // 🔍 Vérifier si une entrée existe déjà pour ce jour
+        const existing = await db
+            .select()
+            .from(moodEntries)
+            .where(
+                and(
+                    eq(moodEntries.userId, body.userId),
+                    eq(moodEntries.date, body.date)
+                )
+            );
+
+        if (existing.length > 0) {
+            // 🔁 UPDATE si déjà existant
+            await db
+                .update(moodEntries)
+                .set({ mood: body.mood })
+                .where(
+                    and(
+                        eq(moodEntries.userId, body.userId),
+                        eq(moodEntries.date, body.date)
+                    )
+                );
+
+            return NextResponse.json({ message: "Mood updated" });
+        }
+
+        // ➕ INSERT si pas existant
+        const newEntry = await db
+            .insert(moodEntries)
+            .values({
+                userId: body.userId,
+                date: body.date,
+                mood: body.mood,
+            })
+            .returning();
 
         return NextResponse.json(newEntry[0], { status: 201 });
+
     } catch (error) {
-        return NextResponse.json({ error: "Could not save mood entry" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Could not save mood entry" },
+            { status: 500 }
+        );
     }
 }
