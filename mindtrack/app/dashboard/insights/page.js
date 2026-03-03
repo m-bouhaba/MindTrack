@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { Sparkles, Brain, Loader2 } from 'lucide-react';
-import { getHabits, getHabitCompletions, getMoodEntries, getAIInsights } from '@/lib/api';
+import { getAIInsights } from '@/lib/api';
 import InsightsCard from '@/components/insights/InsightsCard';
 
 export default function InsightsPage() {
@@ -12,39 +12,13 @@ export default function InsightsPage() {
   const [loading, setLoading] = useState(false);
   const [aiMessage, setAiMessage] = useState('');
 
-  const prepareDataForAI = async () => {
-    try {
-      const [moodData, habitsData, completionsData] = await Promise.all([
-        getMoodEntries(user.id),
-        getHabits(user.id),
-        getHabitCompletions(user.id),
-      ]);
-
-      const totalHabits = habitsData.length;
-      const totalCompletions = completionsData.length;
-      const recentMoods = moodData.slice(-7).map((m) => m.mood).join(', ');
-
-      return `
-        User Profile:
-        - Active Habits: ${totalHabits}
-        - Total habit completions recorded: ${totalCompletions}
-        - Last 7 mood entries: ${recentMoods || 'None yet'}
-      `;
-    } catch (error) {
-      console.error('Error gathering data for AI:', error);
-      return 'Unable to gather recent data.';
-    }
-  };
-
   const handleGetInsights = async () => {
     if (!user) return;
     setLoading(true);
     setAiMessage('');
 
-    const summary = await prepareDataForAI();
-
     try {
-      const data = await getAIInsights(summary);
+      const data = await getAIInsights({ userId: user.id });
       if (data.text) {
         setAiMessage(data.text);
       } else {

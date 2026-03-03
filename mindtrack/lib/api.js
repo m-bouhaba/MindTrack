@@ -76,11 +76,11 @@ export async function submitMood(userId, date, mood) {
 
 // ─── AI Insights ───────────────────────────────────────
 
-export async function getAIInsights(summary) {
+export async function getAIInsights(payload) {
     const res = await fetch('/api/ai-insights', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ summary }),
+        body: JSON.stringify(payload),
     });
     return res.json();
 }

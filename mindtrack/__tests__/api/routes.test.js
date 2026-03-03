@@ -8,6 +8,16 @@ import { NextResponse } from 'next/server';
 // ─── Mock the database ─────────────────────────────────
 // We mock `@/lib/db` so routes never touch a real database.
 
+// Mock NextResponse.json pour Jest
+jest.mock('next/server', () => ({
+    NextResponse: {
+        json: (data, options) => ({
+            status: options?.status || 200,
+            json: () => Promise.resolve(data), // <- méthode .json() pour Jest
+        }),
+    },
+}));
+
 const mockSelect = jest.fn();
 const mockInsert = jest.fn();
 const mockUpdate = jest.fn();
