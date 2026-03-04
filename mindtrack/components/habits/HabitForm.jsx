@@ -12,6 +12,7 @@ export default function HabitForm({
     onChange,
     onSubmit,
     onCancel,
+    error,
 }) {
     return (
         <AnimatePresence>
@@ -31,14 +32,19 @@ export default function HabitForm({
                         </button>
                     </div>
 
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                            {error}
+                        </div>
+                    )}
+
                     <form onSubmit={onSubmit} className="space-y-4">
                         <input
                             type="text"
                             value={formData.name}
                             onChange={(e) => onChange({ ...formData, name: e.target.value })}
                             placeholder="Habit Name"
-                            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500"
-                            required
+                            className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 ${error && !formData.name.trim() ? 'border-red-400' : 'border-gray-300'}`}
                         />
 
                         <input
@@ -49,7 +55,6 @@ export default function HabitForm({
                             }
                             placeholder="Description"
                             className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500"
-                            required
                         />
 
                         <div>
@@ -61,8 +66,8 @@ export default function HabitForm({
                                         type="button"
                                         onClick={() => onChange({ ...formData, icon })}
                                         className={`p-4 rounded-xl border-2 text-2xl transition-all ${formData.icon === icon
-                                                ? 'border-blue-600 bg-blue-50 scale-110'
-                                                : 'border-gray-200 hover:border-gray-300'
+                                            ? 'border-blue-600 bg-blue-50 scale-110'
+                                            : 'border-gray-200 hover:border-gray-300'
                                             }`}
                                     >
                                         {icon}

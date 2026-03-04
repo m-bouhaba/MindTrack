@@ -27,9 +27,8 @@ export function AuthProvider({ children }) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        alert(error.error || 'Erreur lors de la création');
-        return null;
+        const data = await response.json();
+        return { error: data.error || 'Could not create account.' };
       }
 
       const newUser = await response.json();
@@ -38,8 +37,7 @@ export function AuthProvider({ children }) {
       return newUser;
     } catch (err) {
       console.error('Signup error:', err);
-      alert('Impossible de créer le compte. Veuillez réessayer.');
-      return null;
+      return { error: 'Server error, please try again later.' };
     }
   };
 
@@ -53,9 +51,8 @@ export function AuthProvider({ children }) {
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        alert(error.error || 'Identifiants incorrects');
-        return null;
+        const data = await res.json();
+        return { error: data.error || 'Invalid email or password.' };
       }
 
       const loggedUser = await res.json();
@@ -64,8 +61,7 @@ export function AuthProvider({ children }) {
       return loggedUser;
     } catch (err) {
       console.error('Login error:', err);
-      alert('Erreur de connexion. Vérifiez votre réseau.');
-      return null;
+      return { error: 'Server error, please try again later.' };
     }
   };
 

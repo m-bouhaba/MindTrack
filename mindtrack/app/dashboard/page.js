@@ -103,7 +103,7 @@ export default function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <h1 className="mb-2">Welcome back!</h1>
+        <h1 className="text-2xl font-bold">Welcome back!</h1>
         <p className="text-gray-600 mb-6">
           Track your habits and mood for today
         </p>
